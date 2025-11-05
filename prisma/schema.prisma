@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ================= ENUMS =================
+
+enum Role {
+  SUPER_ADMIN
+  STAFF
+}
+
+enum RegistrationStatus {
+  GUEST
+  REGISTERED
+}
+
+enum PitchStatus {
+  OPEN
+  CLOSED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// ================= MODELS =================
+
+model User {
+  id                 String             @id @default(uuid(7))
+  lineUserId         String             @unique @map("line_user_id")
+  displayName        String             @map("display_name")
+  fristName          String?            @map("first_name")
+  lastName           String?            @map("last_name")
+  phoneNumber        String?            @unique @map("phone_number")
+  email              String?            @unique
+  registrationStatus RegistrationStatus @default(GUEST) @map("registration_status")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  bookings      Booking[]
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model Admin {
+  id           String   @id @default(uuid(7))
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phoneNumber  String   @map("phone_number")
+  role         Role     @default(STAFF)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pitchesAdded     Pitch[]          @relation("AdminAddedPitch")
+  bookingsModified Booking[]        @relation("AdminModifiedBooking")
+  keysCreated      AdminInviteKey[] @relation("KeyCreator")
+  keyUsed          AdminInviteKey?  @relation("KeyUser") // 1-to-1 optional relation
+
+  @@map("admins")
+}
+
+model AdminInviteKey {
+  id          String   @id @default(uuid(7))
+  keyValue    String   @unique @map("key_value")
+  roleToGrant Role     @default(STAFF) @map("role_to_grant")
+  isUsed      Boolean  @default(false) @map("is_used")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdByAdminId String? @map("created_by_admin_id")
+  createdByAdmin   Admin?  @relation("KeyCreator", fields: [createdByAdminId], references: [id])
+
+  usedByAdminId String? @unique @map("used_by_admin_id") // @unique for 1-to-1 relation
+  usedByAdmin   Admin?  @relation("KeyUser", fields: [usedByAdminId], references: [id])
+
+  @@map("admin_invite_keys")
+}
+
+model Pitch {
+  id         String      @id @default(uuid(7))
+  name       String
+  type       String
+  hourlyRate Float       @map("hourly_rate") // ใช้ Decimal แทน Float ได้ถ้าต้องการความแม่นยำสูงเรื่องเงิน
+  status     PitchStatus @default(OPEN)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  addedByAdminId String
+  addedByAdmin   Admin  @relation("AdminAddedPitch", fields: [addedByAdminId], references: [id])
+
+  bookings Booking[]
+
+  @@map("pitches")
+}
+
+model Booking {
+  id         String        @id @default(uuid(7))
+  startTime  DateTime      @map("start_time")
+  endTime    DateTime      @map("end_time")
+  totalPrice Float         @map("total_price")
+  status     BookingStatus @default(PENDING)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  pitchId String @map("pitch_id")
+  pitch   Pitch  @relation(fields: [pitchId], references: [id])
+
+  lastModifiedByAdminId String? @map("last_modified_by_admin_id")
+  lastModifiedByAdmin   Admin?  @relation("AdminModifiedBooking", fields: [lastModifiedByAdminId], references: [id])
+
+  @@map("bookings")
+}
+
+model Conversation {
+  id          String           @id @default(uuid(7))
+  direction   MessageDirection
+  messageText String           @map("message_text") @db.Text // ใช้ @db.Text เพื่อรองรับข้อความยาวๆ
+  intent      String?
+  entities    Json? // ใช้ Json type เก็บข้อมูลที่ยืดหยุ่นจาก AI
+  timestamp   DateTime         @default(now())
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("conversations")
+}
