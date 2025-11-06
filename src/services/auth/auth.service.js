@@ -23,13 +23,32 @@ authService.register = async (email, password, firstName, lastName, phoneNumber)
     return newUser
 }
 
-authService.login = async (email, password) => {
+authService.login = async (email) => {
+
     const userFound = await prisma.admin.findUnique({ where: { email } })
+
     if (!userFound) {
         throw createHttpError(404, 'Invalid Information')
     }
 
+    console.log('userFound', userFound)
+
     return userFound
+}
+
+authService.me = async (userId) => {
+
+    const userInfo = await prisma.admin.findUnique({
+        where: {
+            id: userId
+        },
+        omit: {
+            passwordHash: true,
+            createdAt: true,
+            updatedAt: true
+        }
+    })
+    return userInfo
 }
 
 export default authService

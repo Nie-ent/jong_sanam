@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken"
 import authService from "../../services/auth/auth.service.js"
+import bcrypt from "bcryptjs"
 
 const authController = {}
 
@@ -12,19 +13,33 @@ authController.register = async (req, res) => {
 
 authController.login = async (req, res) => {
     const { email, password } = req.body
-    const { passwordHash, id } = authService.login(email, password)
-    const verifyPassword = await bcrypt.compare(password, passwordHash)
+    const userFound = await authService.login(email)
+    const verifyPassword = await bcrypt.compare(password, userFound.passwordHash)
+
     if (!verifyPassword) {
         throw createHttpError(404, 'Invalid Information')
     }
-    const payload = id
+
+    const payload = { id: userFound.id }
+    console.log('payload =>', payload)
+
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
         algorithm: "HS256",
-        expiresIn: "15d"
+        expiresIn: "30m"
     })
+    console.log('token', token)
 
-    res.status(200).json({ message: 'login success', token: token })
+    res.status(200).json({ message: 'login success', token: token, user: userFound.email })
 
+}
+
+authController.getMe = async (req, res) => {
+    const userId = req.userId
+    const userInfo = await authService.me(userId)
+
+    console.log('userInfo =>', userInfo)
+
+    res.json({ data: userInfo })
 }
 
 export default authController

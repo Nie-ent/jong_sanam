@@ -2,6 +2,7 @@ import compression from "compression"
 import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
+import cors from "cors"
 
 import notFoundMiddleware from "./middlewares/errors/not-found.middleware.js"
 import errorMiddleware from "./middlewares/errors/error.middleware.js"
@@ -13,6 +14,9 @@ const app = express()
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(compression())
+app.use(cors({
+    origin: true
+}))
 
 //use express
 app.use(express.json())
