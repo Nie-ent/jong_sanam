@@ -6,7 +6,7 @@ import cors from "cors"
 
 import notFoundMiddleware from "./middlewares/errors/not-found.middleware.js"
 import errorMiddleware from "./middlewares/errors/error.middleware.js"
-import mainRouter from "./routes/mainRouter.route.js"
+import mainRouter from "./routes/main.route.js"
 
 const app = express()
 

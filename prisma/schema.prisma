@@ -30,6 +30,7 @@ enum PitchStatus {
   OPEN
   CLOSED
   MAINTENANCE
+  PENDDING
 }
 
 enum BookingStatus {
@@ -49,8 +50,7 @@ model User {
   id                 String             @id @default(uuid(7))
   lineUserId         String             @unique @map("line_user_id")
   displayName        String             @map("display_name")
-  fristName          String?            @map("first_name")
-  lastName           String?            @map("last_name")
+  profileImg         String?
   phoneNumber        String?            @unique @map("phone_number")
   email              String?            @unique
   registrationStatus RegistrationStatus @default(GUEST) @map("registration_status")
@@ -103,9 +103,9 @@ model AdminInviteKey {
 
 model Pitch {
   id         String      @id @default(uuid(7))
-  name       String
+  name       String      @unique
   type       String
-  hourlyRate Float       @map("hourly_rate") // ใช้ Decimal แทน Float ได้ถ้าต้องการความแม่นยำสูงเรื่องเงิน
+  hourlyRate Int         @map("hourly_rate") // ใช้ Decimal แทน Float ได้ถ้าต้องการความแม่นยำสูงเรื่องเงิน
   status     PitchStatus @default(OPEN)
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")
@@ -120,13 +120,12 @@ model Pitch {
 }
 
 model Booking {
-  id         String        @id @default(uuid(7))
-  startTime  DateTime      @map("start_time")
-  endTime    DateTime      @map("end_time")
-  totalPrice Float         @map("total_price")
-  status     BookingStatus @default(PENDING)
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt @map("updated_at")
+  id        String        @id @default(uuid(7))
+  startTime DateTime      @map("start_time")
+  endTime   DateTime      @map("end_time")
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   // Relations
   userId String @map("user_id")

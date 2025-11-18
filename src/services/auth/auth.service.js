@@ -31,7 +31,6 @@ authService.login = async (email) => {
         throw createHttpError(404, 'Invalid Information')
     }
 
-    console.log('userFound', userFound)
 
     return userFound
 }

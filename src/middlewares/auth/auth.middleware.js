@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken"
-import userService from "../../services/user.service.js"
 import createHttpError from "http-errors"
+import userService from "../../services/user.service.js"
 
 export default async (req, res, next) => {
+
 
     const authorization = req.headers.authorization
 
@@ -17,7 +18,7 @@ export default async (req, res, next) => {
 
     const payload = jwt.verify(token, process.env.JWT_SECRET)
     const foundUser = await userService(payload.id)
-    console.log('foundUser', foundUser)
+    // console.log('foundUser', foundUser)
     req.userId = foundUser.id
     next()
 }
